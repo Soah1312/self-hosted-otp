@@ -287,11 +287,11 @@ export default function DemoPage() {
 
   return (
     <main className="demoShell">
-      <div className="demoCard" key={fadeKey}>
+      <div className={`demoCard ${screen === "otp" && !isVerified ? "demoCard--wide" : ""}`} key={fadeKey}>
         {/* ── Brand logo — always top-left ── */}
         <div className="demoBrandRow">
           <span className="demoBrandMark" aria-hidden="true" />
-          <span className="demoBrandText">PingAuth</span>
+          <span className="demoBrandText">SMS-Verify</span>
         </div>
 
         {/* ── Screen 1 — Phone ── */}
