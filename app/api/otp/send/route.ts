@@ -32,8 +32,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const ttl = await redis.ttl(cooldownKey);
-    if (ttl > 0) {
+    // Atomically acquire cooldown to avoid duplicate sends in race conditions.
+    const cooldownLock = await redis.set(cooldownKey, "1", { nx: true, ex: COOLDOWN_TTL });
+    if (cooldownLock !== "OK") {
+      const ttl = await redis.ttl(cooldownKey);
       await redis.del(inflightKey);
       return NextResponse.json({ success: false, message: "Resend cooldown active", retryAfter: ttl }, { status: 429 });
     }
@@ -44,7 +46,6 @@ export async function POST(req: Request) {
 
     // Store hashed OTP with expiry and attempt counter.
     await redis.set(dataKey, { hashedOtp, attempts: 0 }, { ex: OTP_TTL });
-    await redis.set(cooldownKey, "1", { ex: COOLDOWN_TTL });
 
     try {
       const smsResult = await sendSms(phone, otp);
