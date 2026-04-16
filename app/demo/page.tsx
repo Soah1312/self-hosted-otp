@@ -100,6 +100,7 @@ export default function DemoPage() {
   const [redirectCountdown, setRedirectCountdown] = useState(0);
   const [resendInfo, setResendInfo] = useState("");
   const [lastResponseMessage, setLastResponseMessage] = useState("");
+  const [showFunnyMessage, setShowFunnyMessage] = useState(false);
   const submittedOtpRef = useRef("");
   const redirectTimerRef = useRef<number | null>(null);
 
@@ -110,6 +111,14 @@ export default function DemoPage() {
 
   useEffect(() => {
     setFadeKey((value) => value + 1);
+    
+    if (screen === "otp") {
+      setShowFunnyMessage(false);
+      const timer = setTimeout(() => setShowFunnyMessage(true), 3000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowFunnyMessage(false);
+    }
   }, [screen]);
 
   useEffect(() => {
@@ -179,7 +188,7 @@ export default function DemoPage() {
       return;
     }
 
-    setPhoneError(result.data.message ?? "Unable to send OTP");
+    setPhoneError(result.data.message ?? "The server might be sleeping. Try again later!");
   }
 
   async function verifyOtp(explicitOtp?: string) {
@@ -217,7 +226,7 @@ export default function DemoPage() {
       return;
     }
 
-    setOtpError(result.data.message ?? "Verification failed");
+    setOtpError(result.data.message ?? "Hmm, something snapped. Let's try again in a bit.");
   }
 
   function startRedirectCountdown() {
@@ -265,7 +274,7 @@ export default function DemoPage() {
       return;
     }
 
-    setResendInfo(result.data.message ?? "Unable to resend OTP");
+    setResendInfo(result.data.message ?? "Looks like the pigeon got lost... Try again soon.");
   }
 
   function backToHome() {
@@ -344,9 +353,23 @@ export default function DemoPage() {
               <div className="resendRow">
                 <span>Haven&apos;t received the OTP?</span>
                 <button type="button" className="sendAgainLink" onClick={resendOtp} disabled={retryCountdown > 0 || phoneLoading}>
-                  {retryCountdown > 0 ? `Send again in ${retryCountdown}s` : "Send again"}
+                  {phoneLoading ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      Sending <span className="sendActionAnim">✈️</span>
+                    </span>
+                  ) : retryCountdown > 0 ? (
+                    `Send again in ${retryCountdown}s`
+                  ) : (
+                    "Send again"
+                  )}
                 </button>
               </div>
+
+              {showFunnyMessage && !resendInfo && retryCountdown === 0 && !phoneLoading && (
+                <p className="demoNotice" style={{ fontStyle: "italic", fontSize: "13px" }}>
+                  My mobile must be offline, dont even bother on clicking on send again
+                </p>
+              )}
 
               {resendInfo ? <p className="demoNotice">{resendInfo}</p> : null}
               {redirectCountdown > 0 ? <p className="demoNotice">OTP expired. Returning in {redirectCountdown}s.</p> : null}
