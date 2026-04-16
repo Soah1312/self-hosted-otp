@@ -110,7 +110,6 @@ export default function OtpInput({ value, onChange, error, loading }: OtpInputPr
           type="text"
           inputMode="numeric"
           autoComplete="one-time-code"
-          maxLength={1}
           value={value[index] ?? ""}
           onChange={(event) => handleChange(index, event.target.value)}
           onPaste={(event) => handlePaste(index, event)}

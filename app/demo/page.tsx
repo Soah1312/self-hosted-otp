@@ -113,7 +113,7 @@ function InfoIcon() {
 export default function DemoPage() {
   const [screen, setScreen] = useState<"phone" | "otp">("phone");
   const [fadeKey, setFadeKey] = useState(0);
-  const [phone, setPhone] = useState("8714256600");
+  const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [otp, setOtp] = useState<string[]>(Array.from({ length: OTP_LENGTH }, () => ""));
@@ -394,7 +394,7 @@ export default function DemoPage() {
                   <span className="resendHintIcon">
                     <InfoIcon />
                   </span>
-                  SMS can be delayed when your relay phone is offline.
+                  SMS won't ever be sent if my  mobile is offline(sorry).
                 </p>
               </div>
 

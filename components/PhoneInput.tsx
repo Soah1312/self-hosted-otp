@@ -23,7 +23,7 @@ export default function PhoneInput({ value, onChange, error, loading }: PhoneInp
           className="phoneField"
           type="tel"
           inputMode="numeric"
-          placeholder="98765 43210"
+          placeholder="Enter 10-digit mobile number"
           value={value}
           onChange={handleChange}
           maxLength={10}
