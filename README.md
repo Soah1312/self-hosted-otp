@@ -39,58 +39,25 @@ flowchart LR
 
 ## End-to-End Workflow
 
-### OTP Send Workflow
-
 ```mermaid
-sequenceDiagram
-    participant U as Client
-    participant API as /api/otp/send
-    participant R as Redis
-    participant S as sms-gate
-
-    U->>API: phone + x-api-key
-    API->>API: Validate API key and +91 phone format
-    API->>R: Acquire inflight lock (15s)
-    API->>R: Check cooldown key (60s)
-    API->>API: Generate 6-digit OTP
-    API->>API: Hash OTP (SHA-256)
-    API->>R: Save otp:data:<phone> TTL=300s
-    API->>R: Save otp:cooldown:<phone> TTL=60s
-    API->>S: Send SMS message
-    API->>S: Poll message state (short window)
-    API-->>U: success + messageId + deliveryState
+flowchart LR
+    A[User enters phone number] --> B[Website backend calls OTP send API]
+    B --> C[Service generates and stores OTP in Redis]
+    C --> D[Service sends SMS via sms-gate]
+    D --> E[User receives OTP]
+    E --> F[User enters OTP]
+    F --> G[Website backend calls OTP verify API]
+    G --> H{OTP valid and not expired?}
+    H -->|Yes| I[User authenticated]
+    H -->|No| J[Show error and retry flow]
 ```
 
-### OTP Verify Workflow
-
-```mermaid
-sequenceDiagram
-    participant U as Client
-    participant API as /api/otp/verify
-    participant R as Redis
-
-    U->>API: phone + otp + x-api-key
-    API->>API: Validate API key, phone, otp format
-    API->>R: Read otp:data:<phone>
-    alt No OTP found
-      API-->>U: 404 OTP expired or not found
-    else OTP exists
-      API->>API: Check attempts >= 3
-      alt Too many attempts
-        API->>R: Delete key
-        API-->>U: 410 Too many attempts
-      else Allowed
-        API->>R: Increment attempts (keep TTL)
-        API->>API: Hash incoming otp and compare
-        alt Match
-          API->>R: Delete key
-          API-->>U: 200 OTP verified
-        else Mismatch
-          API-->>U: 400 Invalid OTP + attemptsLeft
-        end
-      end
-    end
-```
+Main steps:
+- Send OTP request from your backend
+- Store hashed OTP with TTL and limits
+- Deliver OTP over SMS
+- Verify OTP from your backend
+- Authenticate user on success
 
 ## Project Structure
 
@@ -140,185 +107,136 @@ Important:
 - NEXT_PUBLIC_API_SECRET_KEY is exposed to browser code. Keep it only for demo/testing flows.
 - For production apps, call the OTP API from your own backend and keep API_SECRET_KEY server-side only.
 
-## API Reference
+## Reuse This Service In Your Own Website (Step-by-Step)
 
-All error responses follow:
+If you want to use this OTP service for your own app, follow this exact flow.
 
-```json
-{ "success": false, "message": "..." }
-```
-
-All successful responses include:
-
-```json
-{ "success": true, ... }
-```
-
-### GET /api/health
-
-No auth required.
-
-Response:
-
-```json
-{
-  "status": "ok",
-  "timestamp": "2026-04-17T10:00:00.000Z"
-}
-```
-
-### POST /api/otp/send
-
-Headers:
-
-```http
-x-api-key: <API_SECRET_KEY>
-Content-Type: application/json
-```
-
-Body:
-
-```json
-{ "phone": "+918329908401" }
-```
-
-Rules:
-- Phone must be +91 followed by 10 digits
-- Cooldown window: 60s
-- Inflight duplicate lock: 15s
-- OTP TTL: 300s
-
-Success (200):
-
-```json
-{
-  "success": true,
-  "message": "OTP sent",
-  "messageId": "abc123",
-  "deliveryState": "Sent"
-}
-```
-
-Errors:
-- 401 Unauthorized
-- 422 Invalid phone number format
-- 429 Resend cooldown active (with retryAfter) or request already in progress
-- 500 SMS sending failed
-
-### POST /api/otp/verify
-
-Headers:
-
-```http
-x-api-key: <API_SECRET_KEY>
-Content-Type: application/json
-```
-
-Body:
-
-```json
-{ "phone": "+918329908401", "otp": "123456" }
-```
-
-Rules:
-- Phone must be +91 followed by 10 digits
-- OTP must be 6 digits
-- Max attempts: 3
-
-Success (200):
-
-```json
-{ "success": true, "message": "OTP verified" }
-```
-
-Errors:
-- 400 Invalid OTP (returns attemptsLeft)
-- 401 Unauthorized
-- 404 OTP expired or not found
-- 410 Too many attempts. Request a new OTP.
-- 422 Invalid input format
-
-## Demo UI Workflow (/demo)
-
-Screen 1:
-- Enter 10-digit mobile number
-- Calls /api/otp/send with +91 prefix
-
-Screen 2:
-- Enter 6-digit OTP
-- Auto-verifies when all digits are filled
-- Send again supports cooldown handling
-- Handles invalid/expired/too-many-attempt states
-
-Verified state:
-- Shows success message and reset action
-
-## Local Development
-
-Install and run:
+### Step 1: Clone and install
 
 ```bash
+git clone <your-fork-or-this-repo-url>
+cd SMS_Service
 npm install
+```
+
+### Step 2: Add your own keys
+
+Create `.env.local` from `.env.example` and set your own values:
+
+- Upstash Redis URL and token
+- sms-gate login/password/url
+- API_SECRET_KEY
+
+Optional (demo only):
+
+- NEXT_PUBLIC_API_SECRET_KEY
+
+Important:
+
+- Never use someone else's secrets.
+- Keep `API_SECRET_KEY` private.
+
+### Step 3: Run locally
+
+```bash
 npm run dev
 ```
 
-Build test:
+Test quickly:
 
-```bash
-npm run build
-```
+- Health check: `GET /api/health`
+- Send OTP: `POST /api/otp/send`
+- Verify OTP: `POST /api/otp/verify`
 
-## Deploy to Vercel
+### Step 4: Deploy to Vercel
 
-1. Push repository to GitHub
-2. Import project in Vercel
-3. Set all environment variables for Production
-4. Deploy
+1. Push your copy to GitHub.
+2. Import repo in Vercel.
+3. Add the same environment variables in Vercel Project Settings.
+4. Deploy.
 
-CLI option:
+Or deploy from CLI:
 
 ```bash
 vercel --prod
 ```
 
-## Integration Pattern for Existing Websites
+### Step 5: Integrate into your website auth flow
 
-Recommended:
-1. Frontend calls your own backend
-2. Your backend calls this OTP service
-3. Keep API_SECRET_KEY on server only
+Use server-to-server calls from your website backend (recommended).
 
-Avoid sending API_SECRET_KEY from browser apps in production.
+Flow:
 
-## Security and Reliability Notes
+1. User enters phone number in your app.
+2. Your backend calls `POST /api/otp/send`.
+3. User enters OTP.
+4. Your backend calls `POST /api/otp/verify`.
+5. On success, your backend logs user in (session/JWT).
 
-- OTP values are never stored in plaintext
-- Redis TTL enforces expiry automatically
-- Attempt limit mitigates brute-force retries
-- Cooldown prevents rapid resend abuse
-- Inflight lock avoids duplicate OTP generation from concurrent clicks
+### Step 6: Sample backend calls
 
-Operational constraint:
-- sms-gate requires the Android relay phone to remain online for message processing.
+Send OTP:
 
-## Troubleshooting
+```http
+POST /api/otp/send
+x-api-key: <API_SECRET_KEY>
+Content-Type: application/json
 
-### 500 SMS sending failed
-- Verify SMS_GATE_* variables in deployment environment
-- Confirm Android relay device is online and sms-gate app is active
-- Check sms-gate status for returned messageId
+{ "phone": "+918329908401" }
+```
 
-### 401 Unauthorized
-- Wrong/missing x-api-key
-- API_SECRET_KEY mismatch between caller and deployment
+Verify OTP:
 
-### 429 Resend cooldown active
-- Wait retryAfter seconds before resending
+```http
+POST /api/otp/verify
+x-api-key: <API_SECRET_KEY>
+Content-Type: application/json
 
-### Demo page not sending OTP
-- Ensure NEXT_PUBLIC_API_SECRET_KEY is set
-- Ensure /api routes are reachable in same deployment
+{ "phone": "+918329908401", "otp": "123456" }
+```
+
+### Step 7: Production best practices
+
+1. Keep `API_SECRET_KEY` only in backend/server env.
+2. Do not call `/api/otp/*` directly from browser in production.
+3. Rotate keys periodically.
+4. Monitor 429 and 500 rates.
+5. Keep sms-gate relay Android device online.
+
+## Can This Work For Different Website Architectures?
+
+Yes. It works with most stacks as long as there is a backend layer.
+
+Supported patterns:
+
+- Next.js (API routes/server actions)
+- Node/Express/Nest
+- Java/Spring
+- .NET
+- Python/FastAPI/Django
+- Mobile apps (Flutter/React Native) via backend
+
+Not recommended directly:
+
+- Pure static frontend only apps that cannot hide secrets
+
+## Current Constraints To Know
+
+1. Phone validation is currently India-specific (`+91` + 10 digits).
+2. sms-gate requires your Android relay device to stay online.
+3. `NEXT_PUBLIC_API_SECRET_KEY` is for demo convenience only.
+
+## If You Want This To Be Multi-Website Ready (Advanced)
+
+For true shared usage across many products, next improvements are:
+
+1. Multi-tenant client keys (`client_id` + per-client secrets).
+2. Per-client rate limits and OTP policies.
+3. Optional global phone format support (not only +91).
+4. Session-based OTP verification (issue `verificationId` on send).
 
 ## License
 
 MIT
+
+Star this repo if this was helpful.
