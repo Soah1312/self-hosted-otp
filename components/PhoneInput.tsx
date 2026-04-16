@@ -18,11 +18,12 @@ export default function PhoneInput({ value, onChange, error, loading }: PhoneInp
     <div className="phoneInputCard">
       <div className="phoneInputRow">
         <span className="countryPrefix">🇮🇳 +91</span>
+        <span className="phoneDivider" />
         <input
           className="phoneField"
           type="tel"
           inputMode="numeric"
-          placeholder="8714256600"
+          placeholder="98765 43210"
           value={value}
           onChange={handleChange}
           maxLength={10}

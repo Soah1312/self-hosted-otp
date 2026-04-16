@@ -58,12 +58,16 @@ export default function OtpInput({ value, onChange, error, loading }: OtpInputPr
     inputRefs.current[nextFocus]?.focus();
   }
 
+  const gridClasses = [
+    "otpGrid",
+    isShaking ? "otpGridShake" : "",
+    loading ? "otpGridLoading" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div
-      className={`otpGrid ${isShaking ? "otpGridShake" : ""}`}
-      onPaste={handlePaste}
-      style={{ opacity: loading ? 0.72 : 1 }}
-    >
+    <div className={gridClasses} onPaste={handlePaste}>
       {Array.from({ length: OTP_LENGTH }).map((_, index) => (
         <input
           key={index}

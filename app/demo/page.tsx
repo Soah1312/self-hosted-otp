@@ -32,6 +32,60 @@ async function postJson<T extends object>(url: string, body: T): Promise<{ statu
   return { status: response.status, data };
 }
 
+/* ─── Phone Illustration SVG (warm palette) ──────────────── */
+
+function PhoneIllustration() {
+  return (
+    <svg
+      className="phoneIllustrationSvg"
+      viewBox="0 0 160 260"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Phone body */}
+      <rect x="20" y="10" width="120" height="240" rx="24" fill="#fff" stroke="#d6d3d1" strokeWidth="1.5" />
+      {/* Screen area */}
+      <rect x="30" y="30" width="100" height="200" rx="10" fill="#FDFCF8" />
+      {/* Coral chat bubble */}
+      <rect x="40" y="52" width="80" height="44" rx="14" fill="#FFB7B2" />
+      {/* White dots on bubble */}
+      <circle cx="56" cy="74" r="3.5" fill="#fff" />
+      <circle cx="68" cy="74" r="3.5" fill="#fff" />
+      <circle cx="80" cy="74" r="3.5" fill="#fff" />
+      <circle cx="92" cy="74" r="3.5" fill="#fff" />
+      {/* Dark shield / checkmark box */}
+      <rect x="52" y="114" width="56" height="56" rx="16" fill="#292524" />
+      {/* White checkmark */}
+      <path
+        d="M68 142 l8 8 l16 -16"
+        stroke="#fff"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      {/* Bottom bar */}
+      <rect x="58" y="192" width="44" height="8" rx="4" fill="#e7e5e4" />
+    </svg>
+  );
+}
+
+/* ─── Green Checkmark SVG ───────────────────────────────── */
+
+function CheckmarkIcon() {
+  return (
+    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M10 18 l6 6 l10 -12"
+        stroke="#16a34a"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function DemoPage() {
   const [screen, setScreen] = useState<"phone" | "otp">("phone");
   const [fadeKey, setFadeKey] = useState(0);
@@ -233,66 +287,80 @@ export default function DemoPage() {
 
   return (
     <main className="demoShell">
-      <section className="demoCardWrap fadeIn">
-        <div className={`demoCard fadeIn ${screen === "otp" ? "demoCardSplit" : "demoCardSingle"}`} key={fadeKey}>
-          <div className="demoBrandRow">
-            <span className="demoBrandMark" aria-hidden="true">
-              O
-            </span>
-            <span className="demoBrandText">SMS OTP</span>
+      <div className="demoCard" key={fadeKey}>
+        {/* ── Brand logo — always top-left ── */}
+        <div className="demoBrandRow">
+          <span className="demoBrandMark" aria-hidden="true" />
+          <span className="demoBrandText">PingAuth</span>
+        </div>
+
+        {/* ── Screen 1 — Phone ── */}
+        {screen === "phone" ? (
+          <div className="demoContent fadeSlideIn">
+            <h1>Verify your identity</h1>
+            <p className="demoSubtitle">
+              Enter your mobile number to receive a verification code
+            </p>
+
+            <form onSubmit={continueWithPhone} className="demoForm">
+              <PhoneInput value={phone} onChange={setPhone} error={phoneError} loading={phoneLoading} />
+            </form>
+
+            {!nextPublicApiKeyPresent ? (
+              <p className="demoNotice">NEXT_PUBLIC_API_SECRET_KEY is not set in your environment.</p>
+            ) : null}
+
+            <p className="demoBottomNote">
+              By continuing you agree to receive an SMS for verification
+            </p>
           </div>
 
-          {screen === "phone" ? (
-            <div className="demoContent">
-              <h1>Verify your identity</h1>
-              <form onSubmit={continueWithPhone} className="demoForm">
-                <PhoneInput value={phone} onChange={setPhone} error={phoneError} loading={phoneLoading} />
-              </form>
-              {!nextPublicApiKeyPresent ? (
-                <p className="demoNotice">NEXT_PUBLIC_API_SECRET_KEY is not set in your environment.</p>
-              ) : null}
+        /* ── Screen 3 — Verified ── */
+        ) : isVerified ? (
+          <div className="verifiedState fadeSlideIn">
+            <div className="verifiedIcon">
+              <CheckmarkIcon />
             </div>
-          ) : isVerified ? (
-            <div className="verifiedState">
-              <div className="verifiedIcon">✓</div>
-              <h2>Verified successfully!</h2>
-              <button type="button" className="backHomeButton" onClick={backToHome}>
-                Back to Home
-              </button>
-            </div>
-          ) : (
-            <div className="demoOtpLayout">
-              <div className="demoContent">
-                <h1>Verify your account</h1>
-                <p className="demoSubtitle">Enter the 6-digit code sent to {phoneWithCode}</p>
+            <h2 className="verifiedHeading">Verified successfully!</h2>
+            <p className="verifiedSubtext">Your identity has been confirmed</p>
+            <button type="button" className="backHomeButton" onClick={backToHome}>
+              Back to Home
+            </button>
+          </div>
 
-                <OtpInput value={otp} onChange={handleOtpChange} error={otpError} loading={otpLoading} />
+        /* ── Screen 2 — OTP ── */
+        ) : (
+          <div className="demoOtpLayout fadeSlideIn">
+            <div className="otpLeftCol">
+              <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "#292524", lineHeight: 1.2 }}>
+                Verify your account
+              </h1>
+              <p className="demoSubtitle">
+                Enter the 6-digit code sent to {phoneWithCode}
+              </p>
 
-                <div className="resendRow">
-                  <span>Haven't received the OTP?</span>
-                  <button type="button" className="sendAgainLink" onClick={resendOtp} disabled={retryCountdown > 0 || phoneLoading}>
-                    {retryCountdown > 0 ? `Resend available in ${retryCountdown}s` : "Send again"}
-                  </button>
-                </div>
+              <OtpInput value={otp} onChange={handleOtpChange} error={otpError} loading={otpLoading} />
 
-                {resendInfo ? <p className="demoNotice">{resendInfo}</p> : null}
-                {redirectCountdown > 0 ? <p className="demoNotice">OTP expired. Returning in {redirectCountdown}s.</p> : null}
-                {lastResponseMessage ? <p className="successNotice">{lastResponseMessage}</p> : null}
+              <div className="resendRow">
+                <span>Haven&apos;t received the OTP?</span>
+                <button type="button" className="sendAgainLink" onClick={resendOtp} disabled={retryCountdown > 0 || phoneLoading}>
+                  {retryCountdown > 0 ? `Send again in ${retryCountdown}s` : "Send again"}
+                </button>
               </div>
 
+              {resendInfo ? <p className="demoNotice">{resendInfo}</p> : null}
+              {redirectCountdown > 0 ? <p className="demoNotice">OTP expired. Returning in {redirectCountdown}s.</p> : null}
+              {lastResponseMessage ? <p className="successNotice">{lastResponseMessage}</p> : null}
+            </div>
+
+            <div className="otpRightCol">
               <aside className="verificationArt" aria-hidden="true">
-                <div className="phoneIllustration">
-                  <div className="chatBubble">
-                    <span />
-                  </div>
-                  <div className="shield">✓</div>
-                  <div className="softLine" />
-                </div>
+                <PhoneIllustration />
               </aside>
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+        )}
+      </div>
     </main>
   );
 }
