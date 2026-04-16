@@ -86,6 +86,30 @@ function CheckmarkIcon() {
   );
 }
 
+function SendActionIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className="sendActionAnim">
+      <path
+        d="M3 10L17 3L13.5 17L9.7 10.3L3 10Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function InfoIcon() {
+  return (
+    <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M9 8.2V12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="9" cy="5.7" r="0.9" fill="currentColor" />
+    </svg>
+  );
+}
+
 export default function DemoPage() {
   const [screen, setScreen] = useState<"phone" | "otp">("phone");
   const [fadeKey, setFadeKey] = useState(0);
@@ -100,7 +124,6 @@ export default function DemoPage() {
   const [redirectCountdown, setRedirectCountdown] = useState(0);
   const [resendInfo, setResendInfo] = useState("");
   const [lastResponseMessage, setLastResponseMessage] = useState("");
-  const [showFunnyMessage, setShowFunnyMessage] = useState(false);
   const submittedOtpRef = useRef("");
   const redirectTimerRef = useRef<number | null>(null);
 
@@ -111,14 +134,6 @@ export default function DemoPage() {
 
   useEffect(() => {
     setFadeKey((value) => value + 1);
-    
-    if (screen === "otp") {
-      setShowFunnyMessage(false);
-      const timer = setTimeout(() => setShowFunnyMessage(true), 3000);
-      return () => clearTimeout(timer);
-    } else {
-      setShowFunnyMessage(false);
-    }
   }, [screen]);
 
   useEffect(() => {
@@ -252,29 +267,18 @@ export default function DemoPage() {
     setOtpError("");
   }
 
-  async function resendOtp() {
-    if (retryCountdown > 0 || phoneLoading) return;
+  function changePhoneNumber() {
+    setScreen("phone");
+    setOtp(Array.from({ length: OTP_LENGTH }, () => ""));
+    setOtpError("");
     setResendInfo("");
-    setPhoneError("");
-    setPhoneLoading(true);
-    const result = await postJson("/api/otp/send", { phone: phoneWithCode });
-    setPhoneLoading(false);
+    setRetryCountdown(0);
+    setLastResponseMessage("");
+    submittedOtpRef.current = "";
+  }
 
-    if (result.status === 200) {
-      setResendInfo("OTP resent");
-      setOtp(Array.from({ length: OTP_LENGTH }, () => ""));
-      setOtpError("");
-      submittedOtpRef.current = "";
-      return;
-    }
-
-    if (result.status === 429 && result.data.retryAfter) {
-      setResendInfo(`Resend available in ${result.data.retryAfter}s`);
-      setRetryCountdown(result.data.retryAfter);
-      return;
-    }
-
-    setResendInfo(result.data.message ?? "Looks like the pigeon got lost... Try again soon.");
+  async function resendOtp() {
+    setResendInfo("My mobile must be offline, dont even bother on clicking on send again");
   }
 
   function backToHome() {
@@ -306,6 +310,14 @@ export default function DemoPage() {
         {/* ── Screen 1 — Phone ── */}
         {screen === "phone" ? (
           <div className="demoContent fadeSlideIn">
+            <div className="demoStepRow" aria-label="Progress step 1 of 2">
+              <span className="demoStepPill">Step 1 of 2</span>
+              <div className="demoStepDots" aria-hidden="true">
+                <span className="demoStepDot demoStepDot--active" />
+                <span className="demoStepDot" />
+              </div>
+            </div>
+
             <h1>Verify your identity</h1>
             <p className="demoSubtitle">
               Enter your mobile number to receive a verification code
@@ -341,35 +353,50 @@ export default function DemoPage() {
         ) : (
           <div className="demoOtpLayout fadeSlideIn">
             <div className="otpLeftCol">
+              <div className="demoStepRow" aria-label="Progress step 2 of 2">
+                <span className="demoStepPill">Step 2 of 2</span>
+                <div className="demoStepDots" aria-hidden="true">
+                  <span className="demoStepDot demoStepDot--active" />
+                  <span className="demoStepDot demoStepDot--active" />
+                </div>
+              </div>
+
               <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "#292524", lineHeight: 1.2 }}>
                 Verify your account
               </h1>
-              <p className="demoSubtitle">
-                Enter the 6-digit code sent to {phoneWithCode}
-              </p>
-
-              <OtpInput value={otp} onChange={handleOtpChange} error={otpError} loading={otpLoading} />
-
-              <div className="resendRow">
-                <span>Haven&apos;t received the OTP?</span>
-                <button type="button" className="sendAgainLink" onClick={resendOtp} disabled={retryCountdown > 0 || phoneLoading}>
-                  {phoneLoading ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      Sending <span className="sendActionAnim">✈️</span>
-                    </span>
-                  ) : retryCountdown > 0 ? (
-                    `Send again in ${retryCountdown}s`
-                  ) : (
-                    "Send again"
-                  )}
+              <div className="otpTargetRow">
+                <p className="demoSubtitle">
+                  Enter the 6-digit code sent to {phoneWithCode}
+                </p>
+                <button type="button" className="changeNumberLink" onClick={changePhoneNumber}>
+                  Change number
                 </button>
               </div>
 
-              {showFunnyMessage && !resendInfo && retryCountdown === 0 && !phoneLoading && (
-                <p className="demoNotice" style={{ fontStyle: "italic", fontSize: "13px" }}>
-                  My mobile must be offline, dont even bother on clicking on send again
+              <OtpInput value={otp} onChange={handleOtpChange} error={otpError} loading={otpLoading} />
+
+              <div className="resendBlock" aria-live="polite">
+                <div className="resendRow">
+                  <span>Haven&apos;t received the OTP?</span>
+                  <button type="button" className="sendAgainLink" onClick={resendOtp} disabled={retryCountdown > 0 || phoneLoading}>
+                    {phoneLoading ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        Sending <SendActionIcon />
+                      </span>
+                    ) : retryCountdown > 0 ? (
+                      `Send again in ${retryCountdown}s`
+                    ) : (
+                      "Send again"
+                    )}
+                  </button>
+                </div>
+                <p className="resendHint">
+                  <span className="resendHintIcon">
+                    <InfoIcon />
+                  </span>
+                  SMS can be delayed when your relay phone is offline.
                 </p>
-              )}
+              </div>
 
               {resendInfo ? <p className="demoNotice">{resendInfo}</p> : null}
               {redirectCountdown > 0 ? <p className="demoNotice">OTP expired. Returning in {redirectCountdown}s.</p> : null}

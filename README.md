@@ -235,8 +235,4 @@ For true shared usage across many products, next improvements are:
 3. Optional global phone format support (not only +91).
 4. Session-based OTP verification (issue `verificationId` on send).
 
-## License
-
-MIT
-
 Star this repo if this was helpful.

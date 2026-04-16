@@ -8,10 +8,16 @@ body {
   min-height: 100%;
 }
 
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
   color: #e8ecf3;
   background: #0a0a0a;
+  -webkit-overflow-scrolling: touch;
 }
 
 a {
@@ -443,6 +449,43 @@ input {
   line-height: 1.5;
 }
 
+.demoStepRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.demoStepPill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  background: #f7f3ed;
+  color: #57534e;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.demoStepDots {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.demoStepDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d6d3d1;
+}
+
+.demoStepDot--active {
+  background: #ffb7b2;
+}
+
 .demoForm {
   margin-top: 28px;
 }
@@ -593,6 +636,30 @@ input {
   padding: 8px 36px 36px;
 }
 
+.otpTargetRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.changeNumberLink {
+  border: 0;
+  background: transparent;
+  color: #57534e;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.changeNumberLink:hover {
+  color: #292524;
+}
+
 .otpRightCol {
   flex: 0 0 45%;
   padding: 0 20px 20px 0;
@@ -665,13 +732,38 @@ input {
 /* ─── Resend Row ────────────────────────────────────────── */
 
 .resendRow {
-  margin-top: 20px;
+  margin-top: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   align-items: center;
   font-size: 14px;
   color: #78716C;
+}
+
+.resendBlock {
+  margin-top: 20px;
+  border: 1px solid #ede9e4;
+  border-radius: 14px;
+  background: #fcfaf5;
+  padding: 12px 14px;
+}
+
+.resendHint {
+  margin: 8px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8a857d;
+  font-size: 12px;
+}
+
+.resendHintIcon {
+  width: 16px;
+  height: 16px;
+  color: #a8a29e;
+  display: inline-flex;
+  flex-shrink: 0;
 }
 
 .sendAgainLink {
@@ -702,6 +794,8 @@ input {
 
 .sendActionAnim {
   display: inline-block;
+  width: 14px;
+  height: 14px;
   animation: flyAway 1.5s infinite;
 }
 
@@ -858,6 +952,23 @@ input {
 /* ─── Responsive ────────────────────────────────────────── */
 
 @media (max-width: 920px) {
+  .lpGrain {
+    display: none;
+  }
+
+  .lpNavInner {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .lpBlobA,
+  .lpBlobB {
+    filter: blur(44px);
+    animation: none;
+    opacity: 0.45;
+  }
+
   .lpHeadline {
     font-size: 40px;
   }
@@ -890,6 +1001,7 @@ input {
 @media (max-width: 700px) {
   .demoCard {
     border-radius: 16px;
+    box-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.08);
   }
 
   .demoBrandRow {
@@ -907,6 +1019,12 @@ input {
   .otpLeftCol {
     flex: none;
     padding: 8px 24px 24px;
+  }
+
+  .otpTargetRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
 
   .otpRightCol {
@@ -927,5 +1045,19 @@ input {
 
   .verifiedState {
     padding: 24px;
+  }
+
+  .fadeSlideIn,
+  .verifiedIcon,
+  .sendActionAnim {
+    animation-duration: 220ms;
+  }
+}
+
+@media (max-width: 700px) and (pointer: coarse) {
+  .fadeSlideIn,
+  .verifiedIcon,
+  .sendActionAnim {
+    animation: none;
   }
 }

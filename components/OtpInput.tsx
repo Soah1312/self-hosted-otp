@@ -16,6 +16,18 @@ export default function OtpInput({ value, onChange, error, loading }: OtpInputPr
   const [isShaking, setIsShaking] = useState(false);
 
   useEffect(() => {
+    inputRefs.current[0]?.focus();
+    inputRefs.current[0]?.select();
+  }, []);
+
+  useEffect(() => {
+    const isCleared = value.every((digit) => digit === "");
+    if (!isCleared) return;
+    inputRefs.current[0]?.focus();
+    inputRefs.current[0]?.select();
+  }, [value]);
+
+  useEffect(() => {
     if (!error) return;
     setIsShaking(true);
     const timeoutId = window.setTimeout(() => setIsShaking(false), 360);
@@ -81,6 +93,7 @@ export default function OtpInput({ value, onChange, error, loading }: OtpInputPr
           maxLength={1}
           value={value[index] ?? ""}
           onChange={(event) => handleChange(index, event.target.value)}
+          onFocus={(event) => event.currentTarget.select()}
           onKeyDown={(event) => handleKeyDown(index, event)}
         />
       ))}
