@@ -1034,13 +1034,16 @@ input {
   }
 
   .otpGrid {
-    grid-template-columns: repeat(3, 52px);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    max-width: 336px;
   }
 
   .otpCell {
-    width: 52px;
-    height: 52px;
-    font-size: 20px;
+    width: 100%;
+    height: 46px;
+    font-size: 18px;
   }
 
   .verifiedState {

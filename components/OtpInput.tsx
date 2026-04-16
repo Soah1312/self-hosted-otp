@@ -46,8 +46,29 @@ export default function OtpInput({ value, onChange, error, loading }: OtpInputPr
     }
   }
 
+  function applyDigitsFrom(index: number, rawText: string) {
+    const digits = rawText.replace(/\D/g, "").slice(0, OTP_LENGTH - index);
+    if (!digits) return;
+
+    const nextValue = [...value];
+    for (let offset = 0; offset < digits.length; offset += 1) {
+      nextValue[index + offset] = digits[offset];
+    }
+
+    onChange(nextValue);
+    const nextFocus = Math.min(index + digits.length, OTP_LENGTH - 1);
+    inputRefs.current[nextFocus]?.focus();
+    inputRefs.current[nextFocus]?.select();
+  }
+
   function handleChange(index: number, rawValue: string) {
-    const digit = rawValue.replace(/\D/g, "").slice(-1);
+    const digitsOnly = rawValue.replace(/\D/g, "");
+    if (digitsOnly.length > 1) {
+      applyDigitsFrom(index, digitsOnly);
+      return;
+    }
+
+    const digit = digitsOnly.slice(-1);
     const nextValue = [...value];
     nextValue[index] = digit;
     onChange(nextValue);
@@ -60,14 +81,13 @@ export default function OtpInput({ value, onChange, error, loading }: OtpInputPr
     }
   }
 
-  function handlePaste(event: ClipboardEvent<HTMLDivElement>) {
-    const pastedText = event.clipboardData.getData("text").replace(/\D/g, "").slice(0, OTP_LENGTH);
+  function handlePaste(index: number, event: ClipboardEvent<HTMLElement>) {
+    const pastedText = event.clipboardData.getData("text");
     if (!pastedText) return;
+
     event.preventDefault();
-    const nextValue = Array.from({ length: OTP_LENGTH }, (_, index) => pastedText[index] ?? "");
-    onChange(nextValue);
-    const nextFocus = Math.min(pastedText.length, OTP_LENGTH - 1);
-    inputRefs.current[nextFocus]?.focus();
+    event.stopPropagation();
+    applyDigitsFrom(index, pastedText);
   }
 
   const gridClasses = [
@@ -79,7 +99,7 @@ export default function OtpInput({ value, onChange, error, loading }: OtpInputPr
     .join(" ");
 
   return (
-    <div className={gridClasses} onPaste={handlePaste}>
+    <div className={gridClasses} onPaste={(event) => handlePaste(0, event)}>
       {Array.from({ length: OTP_LENGTH }).map((_, index) => (
         <input
           key={index}
@@ -93,6 +113,7 @@ export default function OtpInput({ value, onChange, error, loading }: OtpInputPr
           maxLength={1}
           value={value[index] ?? ""}
           onChange={(event) => handleChange(index, event.target.value)}
+          onPaste={(event) => handlePaste(index, event)}
           onFocus={(event) => event.currentTarget.select()}
           onKeyDown={(event) => handleKeyDown(index, event)}
         />
