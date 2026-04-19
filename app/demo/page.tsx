@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import PhoneInput from "@/components/PhoneInput";
 import OtpInput from "@/components/OtpInput";
+import { isValidPhoneNumber } from "react-phone-number-input";
 
 type ApiResponse = {
   success?: boolean;
@@ -127,8 +128,8 @@ export default function DemoPage() {
   const submittedOtpRef = useRef("");
   const redirectTimerRef = useRef<number | null>(null);
 
-  const phoneWithCode = useMemo(() => `+91${phone}`, [phone]);
-  const phoneDigitsValid = /^\d{10}$/.test(phone);
+  const phoneWithCode = phone;
+  const phoneDigitsValid = phone ? isValidPhoneNumber(phone) : false;
   const otpValue = otp.join("");
   const nextPublicApiKeyPresent = getApiKey().length > 0;
 
@@ -180,7 +181,7 @@ export default function DemoPage() {
     setLastResponseMessage("");
 
     if (!phoneDigitsValid) {
-      setPhoneError("Enter a valid 10-digit Indian mobile number");
+      setPhoneError("Enter a valid mobile number for your country");
       return;
     }
 

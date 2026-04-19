@@ -1,6 +1,8 @@
 "use client";
 
 import { ChangeEvent } from "react";
+import ReactPhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 type PhoneInputProps = {
   value: string;
@@ -10,23 +12,17 @@ type PhoneInputProps = {
 };
 
 export default function PhoneInput({ value, onChange, error, loading }: PhoneInputProps) {
-  function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    onChange(event.target.value.replace(/\D/g, "").slice(0, 10));
-  }
-
   return (
     <div className="phoneInputCard">
       <div className="phoneInputRow">
-        <span className="countryPrefix">🇮🇳 +91</span>
-        <span className="phoneDivider" />
-        <input
-          className="phoneField"
-          type="tel"
-          inputMode="numeric"
-          placeholder="Enter 10-digit mobile number"
+        <ReactPhoneInput
+          international
+          defaultCountry="IN"
           value={value}
-          onChange={handleChange}
-          maxLength={10}
+          onChange={(val) => onChange(val || "")}
+          className="globalPhoneInput"
+          placeholder="Enter mobile number"
+          disabled={loading}
         />
       </div>
 

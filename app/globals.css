@@ -536,27 +536,53 @@ input {
   box-shadow: 0 0 0 3px rgba(255, 183, 178, 0.2);
 }
 
-.countryPrefix {
-  white-space: nowrap;
-  font-size: 15px;
-  color: #292524;
-  font-weight: 500;
+/* ─── Global Phone Input Overrides ──────────────────────── */
+
+.globalPhoneInput {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.globalPhoneInput .PhoneInputCountry {
   padding: 14px 0 14px 16px;
   display: flex;
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+  border-right: 1px solid #e7e5e4;
+  margin-right: 12px;
 }
 
-.phoneDivider {
-  width: 1px;
-  height: 24px;
-  background: #e7e5e4;
-  margin: 0 12px;
-  flex-shrink: 0;
+.globalPhoneInput .PhoneInputCountryIcon {
+  width: 24px;
+  height: 16px;
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
 }
 
-.phoneField {
+.globalPhoneInput .PhoneInputCountrySelect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.globalPhoneInput .PhoneInputCountrySelectArrow {
+  border: solid #292524;
+  border-width: 0 2px 2px 0;
+  display: inline-block;
+  padding: 2.5px;
+  transform: rotate(45deg);
+  margin-left: 6px;
+  opacity: 0.6;
+}
+
+.globalPhoneInput .PhoneInputInput {
   flex: 1;
   min-width: 0;
   border: 0;
@@ -568,7 +594,7 @@ input {
   letter-spacing: 0.02em;
 }
 
-.phoneField::placeholder {
+.globalPhoneInput .PhoneInputInput::placeholder {
   color: #a8a29e;
 }
 
