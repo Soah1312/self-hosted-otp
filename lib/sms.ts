@@ -3,18 +3,57 @@ type SmsGatewayState = "Pending" | "Processed" | "Sent" | "Delivered" | "Failed"
 interface SmsGatewayRecipient {
   phoneNumber: string;
   state: string;
+  code?: number;
+  errorCode?: number;
+  error?: { code?: number };
 }
 
 interface SmsGatewayMessage {
-  id: string;
-  state: string;
+  id?: string;
+  state?: string;
+  code?: number;
+  errorCode?: number;
+  error?: { code?: number };
   recipients?: SmsGatewayRecipient[];
 }
 
-interface SmsSendResult {
-  messageId: string;
-  state: string;
+export class SmsCredentialError extends Error {
+  constructor(message = "Invalid SMS gateway credentials") {
+    super(message);
+    this.name = "SmsCredentialError";
+  }
 }
+
+export class SmsQuotaError extends Error {
+  constructor(message = "SMS quota exhausted") {
+    super(message);
+    this.name = "SmsQuotaError";
+  }
+}
+
+export class SmsBlockedError extends Error {
+  constructor(message = "SMS delivery blocked by carrier") {
+    super(message);
+    this.name = "SmsBlockedError";
+  }
+}
+
+export class SmsDeliveryError extends Error {
+  constructor(message = "SMS delivery failed") {
+    super(message);
+    this.name = "SmsDeliveryError";
+  }
+}
+
+type SendSmsParams = {
+  phone: string;
+  message: string;
+  credentials: {
+    login: string;
+    password: string;
+    url: string;
+  };
+};
 
 const DELIVERY_POLL_ATTEMPTS = 5;
 const DELIVERY_POLL_INTERVAL_MS = 1200;
@@ -23,9 +62,73 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function readResponsePayload(response: Response): Promise<unknown> {
+  const text = await response.text();
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
+}
+
+function readErrorCodeFromPayload(payload: unknown): number | null {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const record = payload as Record<string, unknown>;
+  const directCode = record.code ?? record.errorCode;
+
+  if (typeof directCode === "number") {
+    return directCode;
+  }
+
+  if (typeof record.error === "object" && record.error) {
+    const nestedCode = (record.error as Record<string, unknown>).code;
+    if (typeof nestedCode === "number") {
+      return nestedCode;
+    }
+  }
+
+  if (Array.isArray(record.recipients)) {
+    for (const recipient of record.recipients) {
+      if (!recipient || typeof recipient !== "object") {
+        continue;
+      }
+
+      const recipientCode = (recipient as Record<string, unknown>).errorCode ?? (recipient as Record<string, unknown>).code;
+      if (typeof recipientCode === "number") {
+        return recipientCode;
+      }
+    }
+  }
+
+  return null;
+}
+
+function assertResponseOkOrThrow(status: number, payload: unknown): void {
+  if (status === 401) {
+    throw new SmsCredentialError();
+  }
+
+  if (status === 402) {
+    throw new SmsQuotaError();
+  }
+
+  if (readErrorCodeFromPayload(payload) === 65) {
+    throw new SmsBlockedError();
+  }
+
+  throw new SmsDeliveryError();
+}
+
 function getRecipientState(message: SmsGatewayMessage, phone: string): string {
   const recipientState = message.recipients?.find((recipient) => recipient.phoneNumber === phone)?.state;
-  return recipientState ?? message.state;
+  return recipientState ?? message.state ?? "Pending";
 }
 
 function isFailureState(state: string): boolean {
@@ -39,17 +142,9 @@ function isSuccessState(state: string): boolean {
   return successStates.has(state);
 }
 
-export async function sendSms(phone: string, otp: string): Promise<SmsSendResult> {
-  const login = process.env.SMS_GATE_LOGIN;
-  const password = process.env.SMS_GATE_PASSWORD;
-  const url = process.env.SMS_GATE_URL;
-
-  if (!login || !password || !url) {
-    throw new Error("Missing SMS Gateway environment variables");
-  }
-
-  // Keep OTP text compact because some carriers reject specific long/OTP phrasing.
-  const message = `Your login code is ${otp}`;
+export async function sendSms(params: SendSmsParams): Promise<void> {
+  const { phone, message, credentials } = params;
+  const { login, password, url } = credentials;
   const authHeader = "Basic " + Buffer.from(`${login}:${password}`).toString("base64");
 
   let response: Response;
@@ -67,26 +162,33 @@ export async function sendSms(phone: string, otp: string): Promise<SmsSendResult
     });
   } catch (error) {
     console.error("SMS gateway network error:", error);
-    throw new Error("Failed to send SMS");
+    throw new SmsDeliveryError();
   }
 
   if (!response.ok) {
-    const text = await response.text();
-    console.error(`Failed to send SMS via sms-gate.app: ${text}`);
-    throw new Error("Failed to send SMS");
+    const payload = await readResponsePayload(response);
+    assertResponseOkOrThrow(response.status, payload);
   }
 
-  let createdMessage: SmsGatewayMessage;
+  const createdPayload = await readResponsePayload(response);
+  const createdMessage = (createdPayload ?? {}) as SmsGatewayMessage;
+
+  if (readErrorCodeFromPayload(createdPayload) === 65) {
+    throw new SmsBlockedError();
+  }
+
   try {
-    createdMessage = (await response.json()) as SmsGatewayMessage;
+    if (!createdMessage || typeof createdMessage !== "object") {
+      throw new Error("Invalid SMS payload");
+    }
   } catch (error) {
     console.error("sms-gate response parse error:", error);
-    throw new Error("Invalid SMS gateway response");
+    throw new SmsDeliveryError();
   }
 
   if (!createdMessage?.id) {
     console.error("sms-gate response missing id:", createdMessage);
-    throw new Error("SMS gateway did not return message id");
+    throw new SmsDeliveryError();
   }
 
   let latestMessage = createdMessage;
@@ -107,28 +209,37 @@ export async function sendSms(phone: string, otp: string): Promise<SmsSendResult
     });
 
     if (!statusResponse.ok) {
-      const statusText = await statusResponse.text();
-      console.error(`Failed to fetch sms-gate status: ${statusText}`);
+      const statusPayload = await readResponsePayload(statusResponse);
+      if (statusResponse.status === 401 || statusResponse.status === 402 || readErrorCodeFromPayload(statusPayload) === 65) {
+        assertResponseOkOrThrow(statusResponse.status, statusPayload);
+      }
+
+      console.error("Failed to fetch sms-gate status:", statusPayload);
       continue;
     }
 
-    latestMessage = (await statusResponse.json()) as SmsGatewayMessage;
+    const statusPayload = await readResponsePayload(statusResponse);
+    latestMessage = (statusPayload ?? {}) as SmsGatewayMessage;
+
+    if (readErrorCodeFromPayload(statusPayload) === 65) {
+      throw new SmsBlockedError();
+    }
+
     latestState = getRecipientState(latestMessage, phone);
   }
 
   if (isFailureState(latestState)) {
+    if (readErrorCodeFromPayload(latestMessage) === 65) {
+      throw new SmsBlockedError();
+    }
+
     console.error("SMS delivery not confirmed:", {
       messageId: createdMessage.id,
       state: latestState,
     });
-    throw new Error(`SMS delivery failed with state: ${latestState}`);
+    throw new SmsDeliveryError();
   }
 
   // If state is still Pending/Processed after polling, accept provider acknowledgement
   // and allow clients to continue; delivery may complete shortly after.
-
-  return {
-    messageId: createdMessage.id,
-    state: latestState,
-  };
 }

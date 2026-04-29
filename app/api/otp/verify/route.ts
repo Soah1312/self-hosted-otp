@@ -1,15 +1,31 @@
 import { NextResponse } from "next/server";
-import { validateApiKey } from "@/lib/auth";
+import { ApiKeyAuthError, resolveTenantFromRequest } from "@/lib/auth";
 import { redis } from "@/lib/redis";
 import { hashOtp } from "@/lib/otp";
 
+function mapAuthError(error: unknown): NextResponse | null {
+  if (error instanceof ApiKeyAuthError) {
+    return NextResponse.json({ success: false, message: error.message }, { status: error.status });
+  }
+
+  return null;
+}
+
 export async function POST(req: Request) {
+  let tenantRecord;
+
   try {
-    const apiKey = req.headers.get("x-api-key");
-    if (!validateApiKey(apiKey)) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    tenantRecord = await resolveTenantFromRequest(req);
+  } catch (error) {
+    const authResponse = mapAuthError(error);
+    if (authResponse) {
+      return authResponse;
     }
 
+    return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
+  }
+
+  try {
     const body = await req.json().catch(() => ({}));
     const phone = body?.phone;
     const otp = body?.otp;
@@ -26,7 +42,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "Invalid OTP format" }, { status: 422 });
     }
 
-    const dataKey = `otp:data:${phone}`;
+    const dataKey = `otp:data:${tenantRecord.tenantId}:${phone}`;
     const otpData = await redis.get<{ hashedOtp: string; attempts: number }>(dataKey);
 
     if (!otpData) {

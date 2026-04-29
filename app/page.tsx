@@ -103,6 +103,15 @@ export default function LandingPage() {
           </div>
           <div className="lpNavRight">
             <Link href="/demo" className="lpNavDemoLink">View Demo</Link>
+            <Link href="/register" className="lpNavDemoLink">Get API Key →</Link>
+            <a
+              className="lpNavDemoPill"
+              href="https://github.com/Soah1312/self-hosted-otp"
+              target="_blank"
+              rel="noreferrer"
+            >
+              GitHub
+            </a>
           </div>
         </div>
       </nav>
@@ -125,19 +134,12 @@ export default function LandingPage() {
           </p>
 
           <div className="lpCtaRow">
-            <Link className="lpCtaPrimary" href="/demo">
+            <Link className="lpCtaPrimary" href="/register">
+              Get API Key
+            </Link>
+            <Link className="lpCtaSecondary" href="/demo">
               View Demo
             </Link>
-            <a
-              className="lpCtaSecondary"
-              href="https://github.com/Soah1312/self-hosted-otp"
-              target="_blank"
-              rel="noreferrer"
-              style={{ gap: '8px' }}
-            >
-              <GithubIcon />
-              Star on GitHub
-            </a>
           </div>
         </section>
 

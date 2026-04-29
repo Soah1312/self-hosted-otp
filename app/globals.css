@@ -905,6 +905,361 @@ input {
   animation: fadeSlideIn 420ms ease-out both;
 }
 
+/* ─── Register Page ───────────────────────────────────── */
+
+.regShell {
+  min-height: 100vh;
+  background: #FDFCF8;
+  color: #292524;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+}
+
+.regContainer {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 124px 16px 40px;
+}
+
+.regCard {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.08);
+  padding: 32px;
+}
+
+.regStateFade {
+  animation: fadeSlideIn 260ms ease-out both;
+}
+
+.regTitle {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.15;
+  color: #292524;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.regSubtitle {
+  margin: 10px 0 0;
+  color: #78716C;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.regForm {
+  margin-top: 28px;
+}
+
+.regFieldLabel {
+  display: block;
+  margin-top: 18px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #292524;
+}
+
+.regInputWrap {
+  position: relative;
+}
+
+.regInput {
+  width: 100%;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+  color: #292524;
+  background: #fff;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.regInput::placeholder {
+  color: #94a3b8;
+}
+
+.regInput:focus {
+  outline: none;
+  border-color: #4F6EF7;
+  box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.14);
+}
+
+.regInputPassword {
+  padding-right: 52px;
+}
+
+.regPasswordToggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.regPasswordToggle:hover {
+  background: #f8fafc;
+}
+
+.regPasswordToggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.regSubmitButton {
+  width: 100%;
+  margin-top: 22px;
+  border: 0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #FFB7B2;
+  color: #292524;
+  font-size: 15px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  box-shadow: 0 4px 16px -4px rgba(255, 183, 178, 0.6);
+}
+
+.regSubmitButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px -8px rgba(255, 183, 178, 0.8);
+}
+
+.regSubmitButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.78;
+}
+
+.regSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(41, 37, 36, 0.25);
+  border-top-color: #292524;
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+.regSecurityNote {
+  margin: 14px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.regSecurityIcon {
+  width: 16px;
+  height: 16px;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+.regSecurityIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.regErrorText {
+  margin: 14px 0 0;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.regSuccessHeading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.regSuccessIcon {
+  width: 28px;
+  height: 28px;
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+.regSuccessIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.regSuccessTitle {
+  font-size: 30px;
+}
+
+.regKeyBox {
+  margin-top: 20px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  padding: 14px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.regKeyBox code {
+  color: #f8fafc;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.regCopyButton {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.regCopyButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.regCopyButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.regWarningText {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #92400e;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.regWarningIcon {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.regWarningIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.regGuideSection {
+  margin-top: 28px;
+}
+
+.regGuideTitle {
+  margin: 0;
+  color: #292524;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.regCodeWrap {
+  margin-top: 16px;
+}
+
+.regStepTitle {
+  margin: 0 0 8px;
+  color: #292524;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.regCodeCard {
+  background: #1a1a1a;
+  border-radius: 12px;
+  padding: 14px;
+  position: relative;
+}
+
+.regCodePre {
+  margin: 0;
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  overflow-x: auto;
+  padding-right: 36px;
+}
+
+.regCodeLine {
+  white-space: pre;
+  color: #cbd5e1;
+}
+
+.regTokCmd {
+  color: #f87171;
+}
+
+.regTokKeyword {
+  color: #a78bfa;
+}
+
+.regTokFlag {
+  color: #93c5fd;
+}
+
+.regTokString {
+  color: #86efac;
+}
+
+.regTokKey {
+  color: #facc15;
+}
+
+.regTokComment {
+  color: #94a3b8;
+}
+
+.regTokText {
+  color: #cbd5e1;
+}
+
+.regDemoButton {
+  margin-top: 18px;
+  text-align: center;
+}
+
+.regNavGhIcon {
+  display: inline-flex;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.regNavGhIcon svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* ─── Keyframes ─────────────────────────────────────────── */
 
 @keyframes fadeSlideIn {
@@ -1025,6 +1380,24 @@ input {
 }
 
 @media (max-width: 700px) {
+  .regContainer {
+    padding-top: 108px;
+  }
+
+  .regCard {
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  .regTitle,
+  .regSuccessTitle {
+    font-size: 28px;
+  }
+
+  .regCodePre {
+    font-size: 12px;
+  }
+
   .demoCard {
     border-radius: 16px;
     box-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.08);

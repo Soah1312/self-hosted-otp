@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import PhoneInput from "@/components/PhoneInput";
 import OtpInput from "@/components/OtpInput";
 import { isValidPhoneNumber } from "react-phone-number-input";
@@ -15,16 +15,16 @@ type ApiResponse = {
 
 const OTP_LENGTH = 6;
 
-function getApiKey(): string {
-  return process.env.NEXT_PUBLIC_API_SECRET_KEY ?? "";
-}
-
-async function postJson<T extends object>(url: string, body: T): Promise<{ status: number; data: ApiResponse }> {
+async function postJson<T extends object>(
+  url: string,
+  body: T,
+  apiKey: string
+): Promise<{ status: number; data: ApiResponse }> {
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": getApiKey(),
+      "x-api-key": apiKey,
     },
     body: JSON.stringify(body),
   });
@@ -125,13 +125,13 @@ export default function DemoPage() {
   const [redirectCountdown, setRedirectCountdown] = useState(0);
   const [resendInfo, setResendInfo] = useState("");
   const [lastResponseMessage, setLastResponseMessage] = useState("");
+  const [apiKey, setApiKey] = useState("");
   const submittedOtpRef = useRef("");
   const redirectTimerRef = useRef<number | null>(null);
 
   const phoneWithCode = phone;
   const phoneDigitsValid = phone ? isValidPhoneNumber(phone) : false;
   const otpValue = otp.join("");
-  const nextPublicApiKeyPresent = getApiKey().length > 0;
 
   useEffect(() => {
     setFadeKey((value) => value + 1);
@@ -185,8 +185,13 @@ export default function DemoPage() {
       return;
     }
 
+    if (!apiKey.trim()) {
+      setPhoneError("Enter your tenant API key to continue");
+      return;
+    }
+
     setPhoneLoading(true);
-    const result = await postJson("/api/otp/send", { phone: phoneWithCode });
+    const result = await postJson("/api/otp/send", { phone: phoneWithCode }, apiKey.trim());
     setPhoneLoading(false);
 
     if (result.status === 200) {
@@ -216,10 +221,17 @@ export default function DemoPage() {
     setOtpError("");
     setLastResponseMessage("");
 
+    if (!apiKey.trim()) {
+      setOtpLoading(false);
+      setOtpError("Enter your tenant API key");
+      submittedOtpRef.current = "";
+      return;
+    }
+
     const result = await postJson("/api/otp/verify", {
       phone: phoneWithCode,
       otp: otpToUse,
-    });
+    }, apiKey.trim());
 
     setOtpLoading(false);
 
@@ -295,10 +307,6 @@ export default function DemoPage() {
     submittedOtpRef.current = "";
   }
 
-  if (!nextPublicApiKeyPresent) {
-    // The UI still renders; the message makes local misconfiguration obvious.
-  }
-
   return (
     <main className="demoShell">
       <div className={`demoCard ${screen === "otp" && !isVerified ? "demoCard--wide" : ""}`} key={fadeKey}>
@@ -324,13 +332,33 @@ export default function DemoPage() {
               Enter your mobile number to receive a verification code
             </p>
 
+            <div style={{ marginTop: 18 }}>
+              <label htmlFor="tenant-api-key" style={{ fontSize: 13, fontWeight: 600, color: "#57534e" }}>
+                Tenant API key
+              </label>
+              <input
+                id="tenant-api-key"
+                type="text"
+                value={apiKey}
+                onChange={(event) => setApiKey(event.target.value)}
+                placeholder="Paste your tenant API key"
+                autoComplete="off"
+                spellCheck={false}
+                style={{
+                  width: "100%",
+                  marginTop: 8,
+                  border: "1.5px solid #e7e5e4",
+                  borderRadius: 14,
+                  padding: "12px 14px",
+                  background: "#FDFCF8",
+                  color: "#292524",
+                }}
+              />
+            </div>
+
             <form onSubmit={continueWithPhone} className="demoForm">
               <PhoneInput value={phone} onChange={setPhone} error={phoneError} loading={phoneLoading} />
             </form>
-
-            {!nextPublicApiKeyPresent ? (
-              <p className="demoNotice">NEXT_PUBLIC_API_SECRET_KEY is not set in your environment.</p>
-            ) : null}
 
             <p className="demoBottomNote">
               By continuing you agree to receive an SMS for verification
